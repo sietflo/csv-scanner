@@ -1,4 +1,4 @@
-.env
+../llm_github_skill/.env
 __pycache__/
 *.pyc
 .venv/
