@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Summarizer</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #1e1e1e; color: #cfcfcf; max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1, h2 { color: #fff; }
+        .upload-box { background: #2d2d2d; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        input[type="file"] { color: #fff; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #252526; color: #fff; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #3c3c3c; }
+        th { background: #333333; }
+        .charts-grid { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+        .chart-card { background: #2d2d2d; padding: 10px; border-radius: 8px; flex: 1 1 400px; }
+    </style>
+</head>
+<body>
+    <h1>📊 CSV Summarizer</h1>
+    <div class="upload-box">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".csv" required>
+            <button type="submit">Аналізувати</button>
+        </form>
+    </div>
+
+    {% if info_table %}
+        <h2>📋 Структура даних та типи</h2>
+        {{ info_table | safe }}
+    {% endif %}
+
+    {% if summary_table %}
+        <h2>📈 Статистичний огляд</h2>
+        {{ summary_table | safe }}
+    {% endif %}
+
+    {% if charts %}
+        <h2>📊 Графіки числових колонок</h2>
+        <div class="charts-grid">
+            {% for chart in charts %}
+                <div class="chart-card">
+                    {{ chart.html | safe }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</body>
+</html>
