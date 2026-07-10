@@ -1,5 +1,6 @@
 import argparse
 import requests
+from pathlib import Path
 from pydantic import BaseModel
 import os
 import json
@@ -7,12 +8,10 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-
 load_dotenv()
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 
 HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
@@ -20,6 +19,7 @@ HEADERS = {
 }
 
 llm = genai.Client(api_key=GEMINI_API_KEY)
+
 
 def fetch_github_files(owner: str, repo: str, path="", branch="main"):
     """Рекурсивна функція, яка ходить по GitHub API замість локального диска"""
@@ -53,6 +53,7 @@ def fetch_github_files(owner: str, repo: str, path="", branch="main"):
                 repo_data[item["path"]] = "[Бінарний або пропущений файл]"
     return repo_data
 
+
 def llm_report(repo_structure: dict):
     """Створює формат запиту до Gemini, визначає промпт та інструкції, та виконує запит"""
     print("\nНадсилаємо запит до Gemini для аналізу коду...")
@@ -80,44 +81,61 @@ def llm_report(repo_structure: dict):
     )
     return response.text
 
-def save_to_markdown(json_str: str, filename="review.md"):
+
+def save_to_markdown(json_str: str, filename="review"):
     """Форматує отриманий JSON та зберігає його у файл .md"""
     try:
+        folder_path = Path("output")
+        folder_path.mkdir(parents=True, exist_ok=True)
+
         data = json.loads(json_str)
-        md_content = f"""# Code Review Report
+        md_path = folder_path / f'{filename}.md'
+        json_path = folder_path / f'{filename}.json'
+
+        with open(json_path, "w", encoding="utf-8") as json_file:
+            json.dump(data, json_file, ensure_ascii=False, indent=2)
+
+        md_content = f"""
+# Code Review Report
 ### 📝 Короткий огляд
-{data.get('summary', '')}
+
+        {data.get('summary', '')}
 
 ---
 ### Використані технології
-{'\n'.join([f'- {item}' for item in data.get('tech', [])])}
+
+        {'\n'.join([f'- {item}' for item in data.get('tech', [])])}
 
 ### ✅ Плюси (Pros)
-{'\n'.join([f'- {item}' for item in data.get('pros', [])])}
+
+        {'\n'.join([f'- {item}' for item in data.get('pros', [])])}
 
 ### ❌ Мінуси / Проблеми (Cons)
-{'\n'.join([f'- {item}' for item in data.get('cons', [])])}
 
-### 💡 Рекомендації щодо покращення (Suggestions)
-{'\n'.join([f'- {item}' for item in data.get('suggestions', [])])}
-"""
-        with open(filename, "w", encoding="utf-8") as f:
+        {'\n'.join([f'- {item}' for item in data.get('cons', [])])}
+
+ ### 💡 Рекомендації щодо покращення (Suggestions)
+
+        {'\n'.join([f'- {item}' for item in data.get('suggestions', [])])}
+        """
+        with open(md_path, "w", encoding="utf-8") as f:
             f.write(md_content)
-        print(f"\nРезультат успішно збережено у файл: {filename}")
+        print(f"\nРезультат успішно збережено у файли:\n - {md_path} \n - {json_path}")
     except Exception as e:
-        print(f"Помилка при збереженні в Markdown: {e}")
+        print(f"Помилка при збереженні: {e}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Скіл для роботи з GitHub API")
 
     parser.add_argument("owner", type=str, help="Власник репозиторію (наприклад, 'sietflo')")
     parser.add_argument("repo", type=str, help="Назва репозиторію (наприклад, 'csv-scanner')")
-    parser.add_argument("--branch", type = str, default="main", help="Назва гілки")
+    parser.add_argument("--branch", type=str, default="main", help="Назва гілки")
     parser.add_argument("--review", action="store_true", help="Запустити аналіз коду через Gemini та зберегти в .md")
     args = parser.parse_args()
 
     print(f"Підключаємось до GitHub API для репозиторію {args.owner}/{args.repo}...\n")
-    repo_data = fetch_github_files(args.owner, args.repo, branch= args.branch)
+    repo_data = fetch_github_files(args.owner, args.repo, branch=args.branch)
     if args.review:
         if not repo_data:
             print("Немає даних для аналізу.")
@@ -125,6 +143,7 @@ def main():
 
         json_review = llm_report(repo_data)
         save_to_markdown(json_review)
+
 
 if __name__ == "__main__":
     main()
