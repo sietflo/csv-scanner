@@ -1,0 +1,35 @@
+# Code Review Report
+
+### Summary
+
+A lightweight Flask-based web application for parsing and summarizing CSV files. It offers data profiling (types, missing values), descriptive statistics, and interactive numeric distributions using Plotly.
+
+---
+### Technologies
+
+- Python
+- Flask
+- Pandas
+- Plotly
+- Jinja2
+- HTML/CSS
+
+### Pros
+
+- Processes CSV files in-memory via file stream without writing to disk, avoiding file storage overhead
+- Generates interactive data visualizations (histograms) using Plotly and displays them inline
+- Clean dark-themed UI layout with responsive CSS layout
+
+### Cons / Issues
+
+- No error handling for malformed or corrupt CSV uploads, which causes a 500 Internal Server Error
+- Prone to high memory consumption or Out-Of-Memory (OOM) crashes on large CSV uploads due to direct in-memory Pandas loading
+- Flask debug mode is enabled by default in the script, which is a security risk for production environments
+- Only checks file extension endswith('.csv') instead of verifying actual MIME types or file headers
+
+### Suggestions
+
+- Add try-except blocks around CSV parsing and display friendly user error messages on the UI
+- Configure MAX_CONTENT_LENGTH in Flask to limit file upload size and prevent memory exhaustion
+- Add support for categorical data visualization using bar charts or pie charts
+- Move configuration variables (port, debug mode) to environment variables
