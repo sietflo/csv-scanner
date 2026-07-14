@@ -53,7 +53,6 @@ def fetch_github_files(owner: str, repo: str, path="", branch="main"):
                 repo_data[item["path"]] = "[Бінарний або пропущений файл]"
     return repo_data
 
-
 def llm_report(repo_structure: dict):
     """Створює формат запиту до Gemini, визначає промпт та інструкції, та виконує запит"""
     print("\nНадсилаємо запит до Gemini для аналізу коду...")
@@ -80,6 +79,7 @@ def llm_report(repo_structure: dict):
         ),
     )
     return response.text
+
 
 
 def save_to_markdown(json_str: str, filename="review"):
